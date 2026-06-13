@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pymupdf
+sentence-transformers
+faiss-cpu
+numpy
+transformers
+accelerate
+python-dotenv
+qdrant-client
+google-generativeai

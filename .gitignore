@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+
+.env
+
+vector_db/qdrant_db/
+vector_db/embeddings.npy
+
+.vscode/
+.idea/
