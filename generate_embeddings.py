@@ -16,21 +16,24 @@ with open(
     encoding="utf-8"
 ) as f:
 
-    pages = json.load(f)
+    sections = json.load(f)
 
-texts = [
-    f"""
-    Subject: {page['subject']}
-    Book: {page['book']}
-    Page: {page['page']}
+texts = []
 
-    {page['text']}
-    """
-    for page in pages
-]
+for section in sections:
+
+    text = f"""
+Subject: {section['subject']}
+Chapter: {section['chapter']}
+Section: {section['section']}
+
+{section['text']}
+"""
+
+    texts.append(text)
 
 print(
-    f"Generating embeddings for {len(texts)} pages..."
+    f"Generating embeddings for {len(texts)} sections..."
 )
 
 embeddings = model.encode(

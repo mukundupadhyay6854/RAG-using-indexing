@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-import google.generativeai as genai
+from openai import OpenAI
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -15,8 +15,15 @@ from sentence_transformers import SentenceTransformer
 
 load_dotenv()
 
-genai.configure(
-    api_key=os.getenv("GEMINI_API_KEY")
+# =====================================
+# OpenRouter Client
+# =====================================
+
+print("Loading OpenRouter...")
+
+llm = OpenAI(
+    api_key=os.getenv("OPENROUTER_API_KEY"),
+    base_url="https://openrouter.ai/api/v1"
 )
 
 # =====================================
@@ -30,12 +37,6 @@ app = FastAPI(
 # =====================================
 # Load Models Once
 # =====================================
-
-print("Loading Gemini...")
-
-llm = genai.GenerativeModel(
-    "gemini-2.5-flash"
-)
 
 print("Loading Embedding Model...")
 
@@ -89,7 +90,7 @@ def ask_question(
     results = client.query_points(
         collection_name=COLLECTION_NAME,
         query=query_embedding,
-        limit=10
+        limit=5
     ).points
 
     context = ""
@@ -100,15 +101,37 @@ def ask_question(
 
         payload = result.payload
 
-        context += payload["text"]
-        context += "\n\n"
+        context += f"""
+Subject: {payload.get('subject', 'Unknown Subject')}
+Chapter: {payload.get('chapter', 'Unknown Chapter')}
+Section: {payload.get('section', 'Unknown Section')}
+
+{payload.get('text', '')}
+
+----------------------------------------
+"""
 
         references.append(
             {
-                "subject": payload["subject"],
-                "book": payload["book"],
-                "page": payload["page"],
-                "score": round(result.score, 4)
+                "subject": payload.get(
+                    "subject",
+                    "Unknown Subject"
+                ),
+
+                "chapter": payload.get(
+                    "chapter",
+                    "Unknown Chapter"
+                ),
+
+                "section": payload.get(
+                    "section",
+                    "Unknown Section"
+                ),
+
+                "score": round(
+                    result.score,
+                    4
+                )
             }
         )
 
@@ -117,7 +140,7 @@ You are an NCERT textbook assistant.
 
 Answer ONLY using the provided NCERT context.
 
-If the answer is not available in the context, reply:
+If the answer is not available in the context, reply exactly:
 
 I could not find the answer in the provided NCERT content.
 
@@ -130,12 +153,26 @@ Question:
 Provide a concise and accurate answer.
 """
 
-    response = llm.generate_content(
-        prompt
-    )
+    try:
+
+        response = llm.chat.completions.create(
+            model="deepseek/deepseek-chat",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
+
+        answer = response.choices[0].message.content
+
+    except Exception as e:
+
+        answer = f"LLM Error: {str(e)}"
 
     return {
         "question": question,
-        "answer": response.text,
+        "answer": answer,
         "references": references
     }

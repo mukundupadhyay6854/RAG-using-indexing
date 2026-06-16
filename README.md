@@ -1,75 +1,32 @@
-# NCERT RAG System using Qdrant, Gemini & FastAPI
+# NCERT RAG System using Qdrant, DeepSeek & FastAPI
 
-An AI-powered Retrieval-Augmented Generation (RAG) system that allows users to ask questions from NCERT textbooks and receive accurate answers along with source references (Subject, Book, Page Number).
+A Retrieval-Augmented Generation (RAG) system built on NCERT textbooks that enables users to ask questions and receive answers grounded in textbook content.
 
----
-
-## Features
-
-- PDF-based Knowledge Base
-- Page-Level Indexing
-- Semantic Search using Embeddings
-- Vector Database using Qdrant
-- Answer Generation using Gemini
-- FastAPI REST API
-- Swagger Documentation
-- Postman Integration
-- Multi-Book Support
-- Source Attribution with Page Numbers
+Unlike traditional page-based retrieval, this version performs **section-level indexing**, where each chapter section becomes an independent vector. This significantly improves retrieval precision and answer quality.
 
 ---
 
-## Architecture
+# Features
+
+* NCERT PDF ingestion using PyMuPDF
+* Section-level indexing
+* Automatic chapter and section extraction
+* SentenceTransformer embeddings
+* Qdrant vector database
+* DeepSeek LLM via OpenRouter
+* FastAPI backend
+* Semantic search over textbook content
+* Source references with chapter and section metadata
+
+---
+
+# Project Structure
 
 ```text
-PDF Books
-    ↓
-Text Extraction
-    ↓
-Page Indexing
-    ↓
-Embedding Generation
-    ↓
-Qdrant Vector Database
-    ↓
-User Question
-    ↓
-Embedding Generation
-    ↓
-Semantic Search
-    ↓
-Relevant Pages Retrieved
-    ↓
-Gemini LLM
-    ↓
-Answer + References
-```
-
----
-
-## Tech Stack
-
-| Component | Technology |
-|------------|------------|
-| Language | Python |
-| Vector Database | Qdrant |
-| Embedding Model | BAAI/bge-base-en-v1.5 |
-| LLM | Gemini 2.5 Flash |
-| API Framework | FastAPI |
-| API Testing | Swagger UI, Postman |
-| PDF Processing | PyMuPDF (fitz) |
-| Environment Management | python-dotenv |
-
----
-
-## Project Structure
-
-```text
-RAG/
+RAG-using-indexing/
 │
 ├── books/
 │   ├── Biology.pdf
-│   ├── Geography.pdf
 │   └── History.pdf
 │
 ├── vector_db/
@@ -82,6 +39,7 @@ RAG/
 ├── load_to_qdrant.py
 ├── rag.py
 ├── app.py
+│
 ├── requirements.txt
 ├── .env
 └── README.md
@@ -89,220 +47,147 @@ RAG/
 
 ---
 
-## Setup Instructions
+# Architecture
 
-### 1. Clone Repository
+```text
+NCERT PDFs
+        ↓
+Section Extraction
+        ↓
+Metadata Generation
+        ↓
+Embedding Generation
+        ↓
+Qdrant Vector Store
+        ↓
+Semantic Retrieval
+        ↓
+DeepSeek (OpenRouter)
+        ↓
+Final Answer
+```
+
+---
+
+# Metadata Format
+
+Each indexed section is stored as:
+
+```json
+{
+  "subject": "Biology",
+  "chapter": "MICROBES IN HUMAN WELFARE",
+  "section": "8.2.1 Fermented Beverages",
+  "text": "Microbes especially yeasts..."
+}
+```
+
+Each section becomes a separate vector.
+
+---
+
+# Embedding Model
+
+```text
+BAAI/bge-base-en-v1.5
+```
+
+Vector Size:
+
+```text
+768
+```
+
+Similarity Metric:
+
+```text
+Cosine Similarity
+```
+
+---
+
+# LLM
+
+This project uses:
+
+```text
+DeepSeek Chat
+```
+
+through:
+
+```text
+OpenRouter
+```
+
+---
+
+# Installation
+
+## 1. Clone Repository
 
 ```bash
-git clone https://github.com/mukundupadhyay6854/RAG-using-indexing.git
-
+git clone <your-repository-url>
 cd RAG-using-indexing
 ```
 
 ---
 
-### 2. Create Virtual Environment
+## 2. Create Virtual Environment
+
+Windows:
 
 ```bash
 python -m venv venv
-```
-
-Activate:
-
-#### Windows
-
-```bash
 venv\Scripts\activate
 ```
 
-#### Linux/Mac
+Linux/Mac:
 
 ```bash
+python3 -m venv venv
 source venv/bin/activate
 ```
 
 ---
 
-### 3. Install Dependencies
+## 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
+If OpenAI SDK is missing:
+
+```bash
+pip install openai
+```
+
 ---
 
-### 4. Configure Gemini API Key
+# API Key Setup
 
-Create a `.env` file:
+Create a file named:
+
+```text
+.env
+```
+
+Add:
 
 ```env
-GEMINI_API_KEY=your_api_key_here
+OPENROUTER_API_KEY=your_openrouter_api_key
 ```
+
+Get a free API key from:
+
+https://openrouter.ai
 
 ---
 
-## Data Pipeline
+# Add Textbooks
 
-### Step 1: Extract Text from PDFs
-
-```bash
-python ingest.py
-```
-
-Output:
-
-```text
-Metadata Created Successfully
-Total Pages Indexed: XXX
-```
-
----
-
-### Step 2: Generate Embeddings
-
-```bash
-python generate_embeddings.py
-```
-
-Output:
-
-```text
-Embeddings Saved Successfully
-Shape: (XXX, 768)
-```
-
----
-
-### Step 3: Load Data into Qdrant
-
-```bash
-python load_to_qdrant.py
-```
-
-Output:
-
-```text
-Upload Successful
-Vectors Stored: XXX
-```
-
----
-
-## Running the RAG System
-
-### Terminal-Based Version
-
-```bash
-python rag.py
-```
-
-Example:
-
-```text
-Enter your question:
-What is Harappan Civilization?
-```
-
-Output:
-
-```text
-Answer:
-...
-
-References:
-History.pdf | Page 1
-History.pdf | Page 5
-```
-
----
-
-## FastAPI Integration
-
-Start the API server:
-
-```bash
-uvicorn app:app
-```
-
-Output:
-
-```text
-Uvicorn running on:
-http://127.0.0.1:8000
-```
-
----
-
-## Swagger Documentation
-
-Open:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-Interactive API documentation will be available.
-
----
-
-## API Endpoints
-
-### Health Check
-
-#### Request
-
-```http
-GET /
-```
-
-#### Response
-
-```json
-{
-    "message": "NCERT RAG API Running"
-}
-```
-
----
-
-### Ask Question
-
-#### Request
-
-```http
-POST /ask
-```
-
-#### Request Body
-
-```json
-{
-    "question": "What is Harappan Civilization?"
-}
-```
-
-#### Response
-
-```json
-{
-    "question": "What is Harappan Civilization?",
-    "answer": "...",
-    "references": [
-        {
-            "subject": "History",
-            "book": "History.pdf",
-            "page": 1,
-            "score": 0.7714
-        }
-    ]
-}
-```
-
----
-
-## Adding New Books
-
-Place the new PDF inside:
+Place NCERT PDFs inside:
 
 ```text
 books/
@@ -313,13 +198,143 @@ Example:
 ```text
 books/
 ├── Biology.pdf
-├── Geography.pdf
-├── History.pdf
-├── Physics.pdf
-└── Chemistry.pdf
+└── History.pdf
 ```
 
-Then run:
+Currently tested on:
+
+* Biology
+* History
+
+---
+
+# Build the Knowledge Base
+
+## Step 1: Extract Sections
+
+```bash
+python ingest.py
+```
+
+Output:
+
+```text
+vector_db/metadata.json
+```
+
+---
+
+## Step 2: Generate Embeddings
+
+```bash
+python generate_embeddings.py
+```
+
+Output:
+
+```text
+vector_db/embeddings.npy
+```
+
+---
+
+## Step 3: Load Vectors into Qdrant
+
+```bash
+python load_to_qdrant.py
+```
+
+Output:
+
+```text
+vector_db/qdrant_db/
+```
+
+---
+
+# Run Local CLI Version
+
+```bash
+python rag.py
+```
+
+Example:
+
+```text
+Enter your question:
+
+What is Microsporogenesis?
+```
+
+Output:
+
+```text
+Answer
+References
+```
+
+---
+
+# Run API Server
+
+Start FastAPI:
+
+```bash
+uvicorn app:app --reload
+```
+
+Server:
+
+```text
+http://127.0.0.1:8000
+```
+
+Swagger UI:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
+
+# Example API Request
+
+POST
+
+```text
+/ask
+```
+
+Request:
+
+```json
+{
+  "question": "What is Microsporogenesis?"
+}
+```
+
+Response:
+
+```json
+{
+  "question": "What is Microsporogenesis?",
+  "answer": "...",
+  "references": [
+    {
+      "subject": "Biology",
+      "chapter": "SEXUAL REPRODUCTION IN FLOWERING PLANTS",
+      "section": "1.2.1 Stamen, Microsporangium and Pollen Grain",
+      "score": 0.72
+    }
+  ]
+}
+```
+
+---
+
+# Development Workflow
+
+Whenever textbooks change:
 
 ```bash
 python ingest.py
@@ -327,51 +342,45 @@ python generate_embeddings.py
 python load_to_qdrant.py
 ```
 
-No code changes required.
+Then restart:
+
+```bash
+uvicorn app:app --reload
+```
 
 ---
 
-## Current Capabilities
+# Current Limitations
 
-- Multiple NCERT books
-- Cross-book retrieval
-- Semantic search
-- Source references
-- REST API support
-- FastAPI integration
-- Postman testing
-- Page-level indexing
+* Geography PDFs are not yet supported.
+* Heading extraction is based primarily on numbered sections.
+* Some exercise questions may still be indexed.
+* Chapter detection in History can occasionally mislabel headings.
 
 ---
 
-## Future Improvements
+# Future Improvements
 
-- Hybrid Chunking + Page Indexing
-- Metadata Filtering
-- Chapter-Level Retrieval
-- User Authentication
-- Docker Deployment
-- Cloud Qdrant Integration
-- Streamlit/Web Interface
-- Conversation Memory
-
----
-
-## Author
-
-**Mukund Upadhyay**
-
-B.Tech Artificial Intelligence  
-SRM Institute of Science and Technology
-
-GitHub:
-https://github.com/mukundupadhyay6854
-
-LinkedIn:
-https://www.linkedin.com/in/mukund-upadhyay
+* Hierarchical heading extraction
+* Subsection support
+* Better History chapter detection
+* Reranking for retrieval
+* Multi-book support
+* Citation-aware answers
+* Local LLM support via Ollama
 
 ---
 
-## License
+# Author
 
-This project is intended for educational and research purposes.
+Mukund Upadhyay
+
+B.Tech Artificial Intelligence
+
+NCERT RAG System using:
+
+* PyMuPDF
+* SentenceTransformers
+* Qdrant
+* DeepSeek
+* FastAPI

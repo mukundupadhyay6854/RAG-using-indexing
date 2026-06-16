@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-import google.generativeai as genai
+from openai import OpenAI
 
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
@@ -12,16 +12,15 @@ from sentence_transformers import SentenceTransformer
 
 load_dotenv()
 
-genai.configure(
-    api_key=os.getenv("GEMINI_API_KEY")
-)
-
 # =====================================
-# Gemini Model
+# OpenRouter Client
 # =====================================
 
-llm = genai.GenerativeModel(
-    "gemini-2.5-flash"
+print("Loading OpenRouter...")
+
+llm = OpenAI(
+    api_key=os.getenv("OPENROUTER_API_KEY"),
+    base_url="https://openrouter.ai/api/v1"
 )
 
 # =====================================
@@ -63,13 +62,13 @@ query_embedding = model.encode(
 ).tolist()
 
 # =====================================
-# Retrieve Relevant Pages
+# Retrieve Relevant Sections
 # =====================================
 
 results = client.query_points(
     collection_name=COLLECTION_NAME,
     query=query_embedding,
-    limit=10
+    limit=5
 ).points
 
 context = ""
@@ -80,15 +79,37 @@ for result in results:
 
     payload = result.payload
 
-    context += payload["text"]
-    context += "\n\n"
+    context += f"""
+Subject: {payload.get('subject', 'Unknown Subject')}
+Chapter: {payload.get('chapter', 'Unknown Chapter')}
+Section: {payload.get('section', 'Unknown Section')}
+
+{payload.get('text', '')}
+
+----------------------------------------
+"""
 
     sources.append(
         {
-            "subject": payload["subject"],
-            "book": payload["book"],
-            "page": payload["page"],
-            "score": round(result.score, 4)
+            "subject": payload.get(
+                "subject",
+                "Unknown Subject"
+            ),
+
+            "chapter": payload.get(
+                "chapter",
+                "Unknown Chapter"
+            ),
+
+            "section": payload.get(
+                "section",
+                "Unknown Section"
+            ),
+
+            "score": round(
+                result.score,
+                4
+            )
         }
     )
 
@@ -115,12 +136,26 @@ Provide a concise and accurate answer.
 """
 
 # =====================================
-# Gemini Response
+# LLM Response
 # =====================================
 
-response = llm.generate_content(
-    prompt
-)
+try:
+
+    response = llm.chat.completions.create(
+        model="deepseek/deepseek-chat",
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
+
+    answer = response.choices[0].message.content
+
+except Exception as e:
+
+    answer = f"LLM Error: {str(e)}"
 
 # =====================================
 # Print Answer
@@ -130,7 +165,7 @@ print("\n" + "=" * 80)
 print("ANSWER")
 print("=" * 80)
 
-print(response.text)
+print(answer)
 
 # =====================================
 # References
@@ -152,11 +187,11 @@ for idx, source in enumerate(
     )
 
     print(
-        f"Book    : {source['book']}"
+        f"Chapter : {source['chapter']}"
     )
 
     print(
-        f"Page    : {source['page']}"
+        f"Section : {source['section']}"
     )
 
     print(

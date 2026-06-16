@@ -33,6 +33,15 @@ print(
 )
 
 # =====================================
+# Validation
+# =====================================
+
+if len(metadata) != len(embeddings):
+    raise ValueError(
+        "Metadata and embeddings count do not match!"
+    )
+
+# =====================================
 # Connect Qdrant
 # =====================================
 
@@ -74,7 +83,7 @@ print(
 client.create_collection(
     collection_name=COLLECTION_NAME,
     vectors_config=VectorParams(
-        size=768,          # BGE Base dimension
+        size=768,
         distance=Distance.COSINE
     )
 )
@@ -85,7 +94,7 @@ client.create_collection(
 
 points = []
 
-for idx, (page, embedding) in enumerate(
+for idx, (section, embedding) in enumerate(
     zip(metadata, embeddings)
 ):
 
@@ -95,10 +104,10 @@ for idx, (page, embedding) in enumerate(
         vector=embedding.tolist(),
 
         payload={
-            "subject": page["subject"],
-            "book": page["book"],
-            "page": page["page"],
-            "text": page["text"]
+            "subject": section["subject"],
+            "chapter": section["chapter"],
+            "section": section["section"],
+            "text": section["text"]
         }
     )
 
@@ -109,7 +118,7 @@ for idx, (page, embedding) in enumerate(
 # =====================================
 
 print(
-    f"Uploading {len(points)} pages..."
+    f"Uploading {len(points)} sections..."
 )
 
 client.upsert(
